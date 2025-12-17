@@ -1,45 +1,34 @@
 package com.cursojava.parte1;
-
-import java.util.List;
-import java.util.Optional;
-
 public class Main {
-
     public static void main(String[] args) {
-
-        PedidoService service = new PedidoService();
-
+        var service = new PedidoService();
+        var pedidos = service.listarTodos();
         System.out.println("=== LISTADO DE PEDIDOS ===");
-        List<Pedido> pedidos = service.listarTodos();
-        for (Pedido p : pedidos) {
-            System.out.println(p);
+        for (var p : pedidos) {
+            System.out.println(p + " -> puntos: " +
+            service.puntosPorEstado(p.estado()));
         }
-
-        System.out.println("\n=== BUSCAR PEDIDO EXISTENTE ===");
-        Optional<Pedido> pedido = service.buscarPorId(1L);
-        if (pedido.isPresent()) {
-            System.out.println("Encontrado: " + pedido.get());
+        System.out.println("\n=== BUSCAR DETALLE (SEALED + INSTANCEOF PATTERN MATCHING) ===");
+        var res = service.buscarDetalle(99L);
+        String msg;
+        if (res instanceof ResultadoExito ex) {
+            msg = "Detalle: " + ex.pedido();
+        } else if (res instanceof ResultadoError err) {
+            msg = "Error: " + err.mensaje();
         } else {
-            System.out.println("No encontrado");
+            // Por seguridad: en teoría no debería ocurrir porque es sealed
+            msg = "Resultado desconocido";
         }
-
-        System.out.println("\n=== BUSCAR PEDIDO INEXISTENTE ===");
-        ResultadoBusqueda res = service.buscarDetalle(99L);
-        if (res.getPedido() != null) {
-            System.out.println("Detalle: " + res.getPedido());
-        } else {
-            System.out.println("Error: " + res.getMensajeError());
+        System.out.println(msg);
+        var total = 0.0;
+        for (var p : pedidos) {
+            total += p.importe();
         }
-
-        double total = 0;
-        for (Pedido p : pedidos) {
-            total += p.getImporte();
-        }
-
-        String informe = "==== INFORME ====\n" +
-                "Total pedidos: " + pedidos.size() + "\n" +
-                "Importe total: " + total + "\n";
-
+        var informe = """
+        ==== INFORME ====
+        Total pedidos: %d
+        Importe total: %.2f
+        """.formatted(pedidos.size(), total);
         System.out.println("\n" + informe);
     }
 }
